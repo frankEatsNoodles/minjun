@@ -4,6 +4,8 @@ import json
 
 app = Flask(__name__)
 
+print("checking")
+
 # Directory to store user vaults
 data_dir = "received_passwords"
 os.makedirs(data_dir, exist_ok=True)
