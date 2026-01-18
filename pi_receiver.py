@@ -11,8 +11,8 @@ os.makedirs(data_dir, exist_ok=True)
 
 def get_user_file(username):
     # Sanitize username for filename
-    safe_user = ''.join(c for c in username if c.isalnum() or c in ('-_')).lower()
-    return os.path.join(data_dir, f"user_{safe_user}.json")
+    web_name = ''.join(c for c in username if c.isalnum() or c in ('-_')).lower()
+    return os.path.join(data_dir, f"{web_name}.json")
 
 @app.route('/store', methods=['POST'])
 def store_password():
@@ -22,7 +22,7 @@ def store_password():
         service = data.get('service', '').strip().lower()
         if not username or not service:
             return jsonify({"status": "error", "message": "Missing username or service"}), 400
-        user_file = get_user_file(username)
+        user_file = get_user_file(service)
         # Load or create user vault
         if os.path.exists(user_file):
             with open(user_file, 'r') as f:
@@ -39,18 +39,17 @@ def store_password():
 
 @app.route('/retrieve', methods=['GET'])
 def retrieve_password():
-    username = request.args.get('username', '').strip().lower()
     service = request.args.get('service', '').strip().lower()
-    if not username or not service:
-        return jsonify({"status": "error", "message": "Missing username or service parameter"}), 400
-    user_file = get_user_file(username)
+    if not service:
+        return jsonify({"status": "error", "message": "Missing service parameter"}), 400
+    user_file = get_user_file(service)
     if not os.path.exists(user_file):
-        return jsonify({"status": "error", "message": f"No credentials found for user {username}"}), 404
+        return jsonify({"status": "error", "message": f"No paths found for website {service}"}), 404
     with open(user_file, 'r') as f:
         vault = json.load(f)
     if service not in vault:
         return jsonify({"status": "error", "message": f"No credentials found for service {service}"}), 404
-    return jsonify({"status": "success", "user": username, "service": service, "data": vault[service]}), 200
+    return jsonify({"status": "success", "service": service, "data": vault[service]}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
