@@ -39,18 +39,41 @@ def store_password():
 
 @app.route('/retrieve', methods=['GET'])
 def retrieve_password():
-    username = request.args.get('username', '').strip().lower()
     service = request.args.get('service', '').strip().lower()
-    if not username or not service:
-        return jsonify({"status": "error", "message": "Missing username or service parameter"}), 400
-    user_file = get_user_file(username)
-    if not os.path.exists(user_file):
-        return jsonify({"status": "error", "message": f"No credentials found for user {username}"}), 404
-    with open(user_file, 'r') as f:
-        vault = json.load(f)
-    if service not in vault:
-        return jsonify({"status": "error", "message": f"No credentials found for service {service}"}), 404
-    return jsonify({"status": "success", "user": username, "service": service, "data": vault[service]}), 200
+    if not service:
+        return jsonify({
+            "status": "error",
+            "message": "Missing service parameter"
+        }), 400
+
+    results = []
+
+    for filename in os.listdir(data_dir):
+        if not filename.endswith(".json"):
+            continue
+
+        user_file = os.path.join(data_dir, filename)
+        with open(user_file, 'r') as f:
+            vault = json.load(f)
+
+        if service in vault:
+            username = filename.replace("user_", "").replace(".json", "")
+            results.append({
+                "user": username,
+                "service": service,
+                "data": vault[service]
+            })
+
+    if not results:
+        return jsonify({
+            "status": "error",
+            "message": f"No credentials found for service {service}"
+        }), 404
+
+    return jsonify({
+        "status": "success",
+        "results": results
+    }), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
