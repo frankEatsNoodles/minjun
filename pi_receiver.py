@@ -22,7 +22,7 @@ def store_password():
         service = data.get('service', '').strip().lower()
         if not username or not service:
             return jsonify({"status": "error", "message": "Missing username or service"}), 400
-        user_file = get_user_file(username)
+        user_file = get_user_file(service)
         # Load or create user vault
         if os.path.exists(user_file):
             with open(user_file, 'r') as f:
@@ -44,7 +44,7 @@ def retrieve_password():
         return jsonify({"status": "error", "message": "Missing service parameter"}), 400
     user_file = get_user_file(service)
     if not os.path.exists(user_file):
-        return jsonify({"status": "error", "message": f"No credentials found for website {service}"}), 404
+        return jsonify({"status": "error", "message": f"No paths found for website {service}"}), 404
     with open(user_file, 'r') as f:
         vault = json.load(f)
     if service not in vault:
